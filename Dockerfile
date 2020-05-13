@@ -4,7 +4,10 @@ RUN apk add --no-cache jq bind-tools
 
 WORKDIR /root
 
-COPY httpstat requirements.txt index.py entrypoint.sh ./
+COPY httpstat httpstat
+COPY requirements.txt index.py entrypoint.sh ./
+
+RUN chmod +x entrypoint.sh
 
 RUN pip install -U pip \
     && pip install -r requirements.txt
