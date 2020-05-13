@@ -16,11 +16,13 @@ def resp_status(path):
         if status_code > 599:
             raise ValueError()
 
-        data = {"status_code": status_code} if is_json else str(status_code)
+        data = (
+            {"statusCode": status_code} if is_json else f"statusCode: {status_code}"
+        )
         resp = handle_resp(data, is_json=is_json)
     except Exception:
         status_code = 500
-        err_msg = f"Invalid status code '{path}'"
+        err_msg = f"Invalid statusCode '{path}'"
         errors = {"errors": err_msg} if is_json else err_msg
         resp = handle_resp(errors, is_json=is_json)
 
