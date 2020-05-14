@@ -1,4 +1,5 @@
 import json
+import time
 from httpstat import app
 from flask import (
     jsonify,
@@ -13,17 +14,17 @@ app.config["JSON_SORT_KEYS"] = False
 
 @app.route("/<path:path>")
 def resp_status(path):
-    req_headers = request.headers
     # Default is json response. Response text if assign accept: text/plain in headers.
-    is_json = req_headers.get("Accept") != "text/plain"
+    is_json = request.headers.get("Accept") != "text/plain"
+    delay_time = delay_resp(request.args.get("delay"))
+    if delay_time:
+        time.sleep(delay_time)
     try:
         status_code = int(path)
         if status_code > 599:
             raise ValueError()
 
-        data = (
-            {"statusCode": status_code} if is_json else f"statusCode: {status_code}"
-        )
+        data = {"statusCode": status_code} if is_json else f"statusCode: {status_code}"
         resp = handle_resp(data, is_json=is_json)
     except Exception:
         status_code = 500
@@ -73,3 +74,13 @@ def get_request_body(request, is_json=True):
         body = body.decode("UTF-8")
 
     return body
+
+
+def delay_resp(delay_time):
+    t = 0
+    try:
+        t = float(delay_time)
+        t = t if t <= 10 else 0
+    except Exception:
+        pass
+    return t
