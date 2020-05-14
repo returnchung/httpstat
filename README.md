@@ -28,3 +28,24 @@ If you need to debug and test locally, the `entrypoint.sh` is runnable.
 ```shell
 $ sh entrypoint.sh dev
 ```
+
+# Request
+
+Just add the status code you want to the URL
+
+```
+http://localhost:32767/200
+http://localhost:32767/401
+```
+
+See the request detailed information.
+
+```
+http://localhost:32767/detail
+```
+
+Delay the response for maximum 10 seconds.
+
+```
+http://localhost:32767/detail?delay=3
+```
