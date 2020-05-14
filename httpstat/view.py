@@ -1,9 +1,14 @@
+import json
 from httpstat import app
 from flask import (
     jsonify,
     request,
     make_response,
 )
+
+
+# Ignore to sorted response json with jsonify
+app.config["JSON_SORT_KEYS"] = False
 
 
 @app.route("/<path:path>")
@@ -29,6 +34,17 @@ def resp_status(path):
     return resp, status_code
 
 
+@app.route("/detail", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+def resp_detail():
+    data = dict()
+    data["method"] = request.method
+    data["headers"] = {k: v for k, v in request.headers}
+    data["body"] = get_request_body(request)
+    data["args"] = {k: v for k, v in request.args.items()}
+    resp = handle_resp(data)
+    return resp, 200
+
+
 def handle_resp(data, is_json=True):
     if is_json:
         resp = jsonify(data)
@@ -40,3 +56,20 @@ def handle_resp(data, is_json=True):
         resp = make_response(data)
 
     return resp
+
+
+def get_request_body(request, is_json=True):
+    if request.content_type == "application/x-www-form-urlencoded":
+        body = request.form.to_dict()
+        return body
+
+    body = request.get_data()
+    if is_json:
+        try:
+            body = json.loads(body)
+        except json.JSONDecodeError:
+            body = body.decode("UTF-8")
+    else:
+        body = body.decode("UTF-8")
+
+    return body
