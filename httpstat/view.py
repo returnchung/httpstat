@@ -12,7 +12,7 @@ from flask import (
 app.config["JSON_SORT_KEYS"] = False
 
 
-@app.route("/<path:path>")
+@app.route("/status/<path:path>")
 def resp_status(path):
     # Default is json response. Response text if assign accept: text/plain in headers.
     is_json = request.headers.get("Accept") != "text/plain"
@@ -35,13 +35,14 @@ def resp_status(path):
     return resp, status_code
 
 
-@app.route("/detail", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-def resp_detail():
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+def resp_detail(path):
     data = dict()
     data["method"] = request.method
     data["headers"] = {k: v for k, v in request.headers}
     data["body"] = get_request_body(request)
     data["args"] = {k: v for k, v in request.args.items()}
+    data["path"] = path
     resp = handle_resp(data)
     return resp, 200
 

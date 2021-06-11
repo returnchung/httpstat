@@ -1,8 +1,11 @@
-USER="return1225";\
 NAME="httpstat";\
 TAG=$(git rev-parse --short HEAD);\
-PORT="32767";\
 IMG=$(docker image ls | grep $NAME | grep $TAG | awk '{print $1}');\
+
+# Get the current credential config and the latest username
+_USER=$(docker-credential-$(jq -r .credsStore ~/.docker/config.json) list | jq -r 'to_entries[-1] | .value')
+# Setup default port and respect the environment.
+_PORT= ${PORT:-32767};\
 
 if [ -z "$TAG" ]
 then
@@ -12,15 +15,15 @@ fi
 if [ "$1" == 'build' ]
 then
     echo "### Force to build image >>>";\
-    docker image build . -t $USER/$NAME:$TAG;\
+    docker image build . -t $_USER/$NAME:$TAG;\
 
 elif [ -z "$IMG" ]
 then
-    docker image pull $USER/$NAME:$TAG;\
+    docker image pull $_USER/$NAME:$TAG;\
     if [ $? -eq 1 ]
     then
         echo "### Build image >>>";\
-        docker image build . -t $USER/$NAME:$TAG;\
+        docker image build . -t $_USER/$NAME:$TAG;\
     else
         echo "### Image downloaded :))";\
         echo $IMG;\
@@ -40,12 +43,12 @@ fi
 
 docker container run -d \
     --name $NAME \
-    -p $PORT:$PORT \
+    -p $_PORT:$_PORT \
     --restart=unless-stopped \
-    $USER/$NAME:$TAG;\
+    $_USER/$NAME:$TAG;\
 
 if [ "$1" == 'push' ] || [ "$2" == 'push' ]
 then
-    echo "### Push image $USER/$NAME:$TAG >>>";\
-    docker image push $USER/$NAME:$TAG;\
+    echo "### Push image $_USER/$NAME:$TAG >>>";\
+    docker image push $_USER/$NAME:$TAG;\
 fi
