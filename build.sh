@@ -3,52 +3,46 @@ TAG=$(git rev-parse --short HEAD);\
 IMG=$(docker image ls | grep $NAME | grep $TAG | awk '{print $1}');\
 
 # Get the current credential config and the latest username
-_USER=$(docker-credential-$(jq -r .credsStore ~/.docker/config.json) list | jq -r 'to_entries[-1] | .value')
+REPO=$DOCKER_REPOSITORY;
 # Setup default port and respect the environment.
-_PORT= ${PORT:-32767};\
+_PORT=${PORT:-32767};\
 
 if [ -z "$TAG" ]
 then
     TAG=$(date +%Y%m%d%H%M);\
 fi
 
-if [ "$1" == 'build' ]
-then
-    echo "### Force to build image >>>";\
-    docker image build . -t $_USER/$NAME:$TAG;\
-
-elif [ -z "$IMG" ]
-then
-    docker image pull $_USER/$NAME:$TAG;\
-    if [ $? -eq 1 ]
-    then
-        echo "### Build image >>>";\
-        docker image build . -t $_USER/$NAME:$TAG;\
-    else
-        echo "### Image downloaded :))";\
-        echo $IMG;\
-    fi
-else
-    echo "### Image found :))";\
-    echo $IMG;\
-fi
-
-CTNER=$(docker container ls -a | grep $NAME | awk '{print $1}');\
-
-if [ ! -z "$CTNER" ]
-then
-    echo "### Remove container before running ...";\
-    docker container rm -f $CTNER;\
-fi
-
-docker container run -d \
-    --name $NAME \
-    -p $_PORT:$_PORT \
-    --restart=unless-stopped \
-    $_USER/$NAME:$TAG;\
-
-if [ "$1" == 'push' ] || [ "$2" == 'push' ]
-then
-    echo "### Push image $_USER/$NAME:$TAG >>>";\
-    docker image push $_USER/$NAME:$TAG;\
-fi
+for arg in $@;
+do
+    case "$arg" in
+        build) build=1
+            if [ -z "$IMG" ]
+            then
+                docker image pull $REPO/$NAME:$TAG;\
+                if [ $? -eq 1 ]
+                then
+                    echo "### Build image >>>";\
+                    docker image build . -t $REPO/$NAME:$TAG;\
+                fi
+            fi
+            ;;
+        push) push=1
+            echo "### Push image $REPO/$NAME:$TAG >>>";\
+            docker image push $REPO/$NAME:$TAG;\
+            ;;
+        run) run=1
+            CTNER=$(docker container ls -a | grep $NAME | awk '{print $1}');\
+            if [ ! -z "$CTNER" ]
+            then
+                echo "### Remove container before running ...";\
+                docker container rm -f $CTNER;\
+            fi
+            docker container run -d \
+                --name $NAME \
+                -p $_PORT:$_PORT \
+                --restart=unless-stopped \
+                $REPO/$NAME:$TAG;\
+            ;;
+        *) echo "unknown args: $arg";;
+    esac
+done
