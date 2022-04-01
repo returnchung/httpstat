@@ -1,10 +1,15 @@
 import json
 import time
+from random import choices
+from string import ascii_lowercase
+
 from httpstat import app
 from flask import (
     jsonify,
     request,
     make_response,
+    redirect,
+    url_for,
 )
 
 
@@ -33,6 +38,12 @@ def resp_status(path):
         resp = handle_resp(errors, is_json=is_json)
 
     return resp, status_code
+
+
+@app.route("/redirect/<path:path>")
+def resp_redirect(path):
+    random_path = "".join(choices(ascii_lowercase, k=10))
+    return redirect(url_for("resp_detail", path=random_path))
 
 
 @app.route("/<path:path>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
