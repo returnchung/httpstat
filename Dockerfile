@@ -1,6 +1,6 @@
-FROM python:3.8.2-alpine3.11
+FROM --platform=linux/amd64 python:3.8.13-slim-buster
 
-RUN apk add --no-cache jq bind-tools
+RUN apt-get update -y && apt-get install -y jq bind9
 
 WORKDIR /root
 
