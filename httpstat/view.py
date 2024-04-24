@@ -12,12 +12,12 @@ from flask import (
     url_for,
 )
 
-
+DEFAULT_RETRY_AFTER = 3
 # Ignore to sorted response json with jsonify
 app.config["JSON_SORT_KEYS"] = False
 
 
-@app.route("/status/<path:path>")
+@app.route("/status/<path:path>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 def resp_status(path):
     # Default is json response. Response text if assign accept: text/plain in headers.
     is_json = request.headers.get("Accept") != "text/plain"
@@ -30,7 +30,8 @@ def resp_status(path):
             raise ValueError()
 
         data = {"statusCode": status_code} if is_json else f"statusCode: {status_code}"
-        resp = handle_resp(data, is_json=is_json)
+        headers = {"Retry-After": DEFAULT_RETRY_AFTER} if status_code == 429 else {}
+        resp = handle_resp(data, is_json=is_json, headers=headers)
     except Exception:
         status_code = 500
         err_msg = f"Invalid statusCode '{path}'"
@@ -58,7 +59,7 @@ def resp_detail(path):
     return resp, 200
 
 
-def handle_resp(data, is_json=True):
+def handle_resp(data, is_json=True, headers=None):
     if is_json:
         resp = jsonify(data)
         resp.headers = {
@@ -67,6 +68,9 @@ def handle_resp(data, is_json=True):
         }
     else:
         resp = make_response(data)
+
+    if headers:
+        resp.headers.update(headers)
 
     return resp
 
