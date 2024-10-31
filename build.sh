@@ -3,7 +3,7 @@ TAG=$(git rev-parse --short HEAD);\
 IMG=$(docker image ls | grep $NAME | grep $TAG | awk '{print $1}');\
 
 # Get the current credential config and the latest username
-REPO=$DOCKER_REPOSITORY;
+REPO=${DOCKER_REPOSITORY:-return1225};
 # Setup default port and respect the environment.
 _PORT=${PORT:-32767};\
 
