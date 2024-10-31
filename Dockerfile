@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.8.13-slim-buster
+FROM python:3.8.13-slim-buster
 
 RUN apt-get update -y && apt-get install -y jq bind9
 
