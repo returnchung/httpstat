@@ -21,9 +21,7 @@ app.config["JSON_SORT_KEYS"] = False
 def resp_status(path):
     # Default is json response. Response text if assign accept: text/plain in headers.
     is_json = request.headers.get("Accept") != "text/plain"
-    delay_time = delay_resp(request.args.get("delay"))
-    if delay_time:
-        time.sleep(delay_time)
+    delay_resp(request.args.get("delay"))
     try:
         status_code = int(path)
         if status_code > 599:
@@ -43,12 +41,14 @@ def resp_status(path):
 
 @app.route("/redirect/<path:path>")
 def resp_redirect(path):
+    delay_resp(request.args.get("delay"))
     random_path = "".join(choices(ascii_lowercase, k=10))
     return redirect(url_for("resp_detail", path=random_path))
 
 
 @app.route("/<path:path>", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 def resp_detail(path):
+    delay_resp(request.args.get("delay"))
     data = dict()
     data["method"] = request.method
     data["headers"] = {k: v for k, v in request.headers}
@@ -62,13 +62,11 @@ def resp_detail(path):
 def handle_resp(data, is_json=True, headers=None):
     if is_json:
         resp = jsonify(data)
-        resp.headers = {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-        }
     else:
         resp = make_response(data)
 
+    cookie_random_token = "".join(choices(ascii_lowercase, k=10))
+    resp.set_cookie("server_custom_token", f"{cookie_random_token}")
     if headers:
         resp.headers.update(headers)
 
@@ -97,6 +95,6 @@ def delay_resp(delay_time):
     try:
         t = float(delay_time)
         t = t if t <= 10 else 0
+        time.sleep(t)
     except Exception:
         pass
-    return t
